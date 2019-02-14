@@ -107,5 +107,5 @@ function Enter-DirectoryInList {
 
     $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
     
-    Set-Location $dirsHash.Item([string]$name)
+    Set-Location $dirHash.Item([string]$name)
 }
