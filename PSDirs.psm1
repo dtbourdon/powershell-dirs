@@ -47,17 +47,17 @@ function Show-DirectoryList {
 function Add-DirectoryToList {
     Param([Parameter(Mandatory=$true)] [string]$path)
     $dirsHash = Read-DirectoryList
-    $newDirsHash = @{}
+    $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
     [int]$index = 1
-    foreach ($item in $dirsHash.GetEnumerator()) {
-        $newDirsHash.Add([string]$index, $item.Value)
+    foreach ($item in $dirsHash.GetEnumerator() | Sort-Object Key) {
+        $orderedDictionary.Add($item.key, $item.Value)
         $index ++
     }
 
-    $newDirsHash.Add([string]$index, $path)
+    $orderedDictionary.Add([string]$index, $path)
     $location = Get-DirectoryListLocation
-    Write-Output $newDirsHash | ConvertTo-Json | Out-File -FilePath $location 
+    Write-Output $orderedDictionary | ConvertTo-Json | Out-File -FilePath $location 
 
     Set-Location $path
 }
@@ -80,18 +80,18 @@ function Remove-DirectoryFromList {
     Param([Parameter(Mandatory=$true)] [string]$name)
 
     $dirsHash = Read-DirectoryList
-    $newDirsHash = @{}
+    $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
     $dirsHash.Remove($name)
 
     [int]$index = 1
-    foreach ($item in $dirsHash.GetEnumerator()) {
-        $newDirsHash.Add([string]$index, $item.Value)
+    foreach ($item in $dirsHash.GetEnumerator() | Sort-Object Key) {
+        $orderedDictionary.Add([string]$index, $item.Value)
         $index ++
     }
     
     $location = Get-DirectoryListLocation
-    Write-Output $newDirsHash | ConvertTo-Json | Out-File -FilePath $location 
+    Write-Output $orderedDictionary | ConvertTo-Json | Out-File -FilePath $location 
 }
 
 <#
