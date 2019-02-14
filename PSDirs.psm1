@@ -22,7 +22,14 @@ function Read-DirectoryList {
     HashTable
 #>
 function Show-DirectoryList {
-    Read-DirectoryList | Sort-Object | Write-Output 
+    $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
+    $dirHash = Read-DirectoryList
+
+    foreach($item in $dirHash.getEnumerator() | Sort-Object Key) {
+        $orderedDictionary.Add($item.key, $item.Value)
+    }
+
+    $orderedDictionary | Write-Output 
 }
 
 <#
@@ -38,13 +45,19 @@ function Show-DirectoryList {
     None.
 #>
 function Add-DirectoryToList {
-    param([string]$path)
-    $dirs = Read-DirectoryList
+    Param([Parameter(Mandatory=$true)] [string]$path)
+    $dirsHash = Read-DirectoryList
+    $newDirsHash = @{}
 
-    $newKey = [string]($dirs.count + 1)
-    $dirs += @{$newKey = $path}
+    [int]$index = 1
+    foreach ($item in $dirsHash.GetEnumerator()) {
+        $newDirsHash.Add([string]$index, $item.Value)
+        $index ++
+    }
+
+    $newDirsHash.Add([string]$index, $path)
     $location = Get-DirectoryListLocation
-    Write-Output $dirs | ConvertTo-Json | Out-File -FilePath $location 
+    Write-Output $newDirsHash | ConvertTo-Json | Out-File -FilePath $location 
 
     Set-Location $path
 }
@@ -64,13 +77,21 @@ function Add-DirectoryToList {
     None.
 #>
 function Remove-DirectoryFromList {
-    param([string]$key)
+    Param([Parameter(Mandatory=$true)] [string]$name)
 
-    $dirs = Read-DirectoryList
+    $dirsHash = Read-DirectoryList
+    $newDirsHash = @{}
 
-    $dirs.Remove($key)
+    $dirsHash.Remove($name)
+
+    [int]$index = 1
+    foreach ($item in $dirsHash.GetEnumerator()) {
+        $newDirsHash.Add([string]$index, $item.Value)
+        $index ++
+    }
+    
     $location = Get-DirectoryListLocation
-    Write-Output $dirs | ConvertTo-Json | Out-File -FilePath $location 
+    Write-Output $newDirsHash | ConvertTo-Json | Out-File -FilePath $location 
 }
 
 <#
@@ -87,18 +108,8 @@ function Remove-DirectoryFromList {
     None.
 #>
 function Enter-DirectoryInList {
-
-    param([int]$key)
-    $dirs = Read-DirectoryList
+    Param([Parameter(Mandatory=$true)] [string]$name)
+    $dirsHash = Read-DirectoryList
     
-    $dir = $dirs.Item([string]$key)
-
-    $location = Get-Location
-    $newKey = [string]($dirs.count + 1)
-    $dirs += @{$newKey = $location.Path}
-    $dirLocation = Get-DirectoryListLocation
-
-    Write-Output $dirs | ConvertTo-Json | Out-File -FilePath $dirLocation
-
-    Set-Location $dir
+    Set-Location $dirsHash.Item([string]$name)
 }
