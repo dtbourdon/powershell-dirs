@@ -1,29 +1,22 @@
-function Get-DirectoryListLocation {
-    return '~/.config/powershell/current-directory-list.json'
-}
-
-function Read-DirectoryList {
-    $location = Get-DirectoryListLocation
-    return Get-Content -Path $location | ConvertFrom-Json -AsHashtable
-}
-
 <#
 .SYNOPSIS
-    Shows the current list of directories available to navigate to.
+    Shows the current list of directories available for navigation.
 .DESCRIPTION
-    Reads up the directory list stored in the current-directory-list.json file.
-    This file maintains the list of directories available for navigation in the shell.
+    Reads up the directory list stored in the $env:DIRS_PATH file. The contents of
+    this file should be a json representation of a hashtable where the keys are integers
+    and the values are directory paths. This file maintains the list of directories
+    available for navigation in the shell.
 .EXAMPLE
-    PS C:\GitHub\posh-git\tests> Show-DirectoryList
-    Returns a hash of directory paths keyed by an integer
+    PS C:\User\yoshi\tests> Show-DirectoryList
+    Returns an OrderedDictionary  of directory paths keyed by an integer
 .INPUTS
     None.
 .OUTPUTS
-    HashTable
+    System.Collections.Specialized.OrderedDictionary
 #>
 function Show-DirectoryList {
     $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
-    $dirHash = Read-DirectoryList
+    $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
 
     foreach($item in $dirHash.getEnumerator() | Sort-Object Key) {
         $orderedDictionary.Add($item.key, $item.Value)
@@ -37,8 +30,10 @@ function Show-DirectoryList {
     Adds a directory to the available directory list.
 .DESCRIPTION
     Adds a provided directory path to the list of available directories for navigation.
+    A side effect of this function is to update the json represetation of the hash of
+    direcories in the $env:DIRS_PATH
 .EXAMPLE
-    PS C:\GitHub\posh-git\tests> Add-DirectoryToList /foo/bar/baz
+    PS C:\User\yoshi\tests> Add-DirectoryToList /foo/bar/baz
 .INPUTS
     Direcory path to add to list.
 .OUTPUTS
@@ -46,7 +41,8 @@ function Show-DirectoryList {
 #>
 function Add-DirectoryToList {
     Param([Parameter(Mandatory=$true)] [string]$path)
-    $dirsHash = Read-DirectoryList
+
+    $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
     $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
     [int]$index = 1
@@ -56,8 +52,7 @@ function Add-DirectoryToList {
     }
 
     $orderedDictionary.Add([string]$index, $path)
-    $location = Get-DirectoryListLocation
-    Write-Output $orderedDictionary | ConvertTo-Json | Out-File -FilePath $location 
+    Write-Output $orderedDictionary | ConvertTo-Json | Out-File -FilePath $env:DIRS_PATH 
 
     Set-Location $path
 }
@@ -67,10 +62,11 @@ function Add-DirectoryToList {
     Removes a directory from the available directory list.
 .DESCRIPTION
     Removes a directory path from the list of available directories for navigation.
-    The directory key to pass in is shown from a prior call to Show-DirectoryList.
-    Can't remove the user's home directory.
+    The directory key to pass as a parameter is shown from a prior call to Show-DirectoryList.
+    A side effect of this function is to update the json represetation of the hash of
+    direcories in the $env:DIRS_PATH
 .EXAMPLE
-    PS C:\GitHub\posh-git\tests> Remove-DirectoryFromList 3
+    PS C:\User\yoshi\tests> Remove-DirectoryFromList 3
 .INPUTS
     Direcory path key
 .OUTPUTS
@@ -79,7 +75,7 @@ function Add-DirectoryToList {
 function Remove-DirectoryFromList {
     Param([Parameter(Mandatory=$true)] [string]$name)
 
-    $dirsHash = Read-DirectoryList
+    $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
     $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
     $dirsHash.Remove($name)
@@ -90,8 +86,7 @@ function Remove-DirectoryFromList {
         $index ++
     }
     
-    $location = Get-DirectoryListLocation
-    Write-Output $orderedDictionary | ConvertTo-Json | Out-File -FilePath $location 
+    Write-Output $orderedDictionary | ConvertTo-Json | Out-File -FilePath $env:DIRS_PATH 
 }
 
 <#
@@ -101,7 +96,7 @@ function Remove-DirectoryFromList {
     Enter a directory path from the list of available directories for navigation.
     The directory key to pass in is shown from a prior call to Show-DirectoryList
 .EXAMPLE
-    PS C:\GitHub\posh-git\tests> Enter-DirectoryInList 3
+    PS C:\User\yoshi\tests> Enter-DirectoryInList 3
 .INPUTS
     Direcory path key
 .OUTPUTS
@@ -109,7 +104,8 @@ function Remove-DirectoryFromList {
 #>
 function Enter-DirectoryInList {
     Param([Parameter(Mandatory=$true)] [string]$name)
-    $dirsHash = Read-DirectoryList
+
+    $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
     
     Set-Location $dirsHash.Item([string]$name)
 }
