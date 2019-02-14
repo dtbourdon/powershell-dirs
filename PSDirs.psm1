@@ -42,7 +42,7 @@ function Show-DirectoryList {
 function Add-DirectoryToList {
     Param([Parameter(Mandatory=$true)] [string]$path)
 
-    $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
+    $dirsHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
     $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
     [int]$index = 1
@@ -75,7 +75,7 @@ function Add-DirectoryToList {
 function Remove-DirectoryFromList {
     Param([Parameter(Mandatory=$true)] [string]$name)
 
-    $dirHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
+    $dirsHash = Get-Content -Path $env:DIRS_PATH | ConvertFrom-Json -AsHashtable
     $orderedDictionary = New-Object System.Collections.Specialized.OrderedDictionary
 
     $dirsHash.Remove($name)
